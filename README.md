@@ -5,8 +5,14 @@ A small, extensible Rocket.Chat bot that forwards user messages to a local
 
 ## How it works
 
-- `rocketchat-async` opens a websocket to Rocket.Chat's Realtime API and
-  subscribes to messages in every channel the bot user is a member of.
+- `chat/rocketchat_client.py` talks to Rocket.Chat's plain REST API only -
+  no websockets/realtime API, so it works fine behind proxies that force
+  `ws://` to redirect to `https://` or otherwise don't support the
+  websocket upgrade.
+- `RockBot` polls: every `ROCKBOT_POLL_INTERVAL` seconds it lists the
+  bot's rooms (`subscriptions.get`) and fetches each room's new messages
+  since the last poll (`channels.history` / `groups.history` /
+  `im.history`, depending on room type).
 - The bot only responds to messages addressed to it via a trigger prefix
   (`ROCKBOT_TRIGGER`, default `/rockbot`) - e.g. `/rockbot how's it
   going?`. Anything else in the channel is ignored, so the bot doesn't
@@ -22,8 +28,8 @@ A small, extensible Rocket.Chat bot that forwards user messages to a local
   model has some context.
 
 ```
-rocketchat --(websocket)--> RockBot --(trigger?)--> Router --> handlers (ping, ...)
-                                                             -> llm_fallback --> Ollama
+rocketchat <--(REST polling)-- RockBot --(trigger?)--> Router --> handlers (ping, ...)
+                                                                -> llm_fallback --> Ollama
 ```
 
 ## Adding a new command
@@ -61,15 +67,18 @@ cp .env.example .env
 Requirements:
 
 - A running Rocket.Chat instance, with a bot user created and **invited to
-  the channels it should listen in** (the bot only subscribes to channels
-  it's already a member of at startup).
+  the rooms it should listen in** (a newly-joined room is picked up on the
+  next poll, but its message history before that point is never replayed).
 - A Personal Access Token for that bot user (Rocket.Chat: avatar menu ->
   My Account -> Personal Access Tokens). Set `ROCKETCHAT_USER_ID` to the
-  bot's user id and `ROCKETCHAT_TOKEN` to the generated token; the bot
-  authenticates over the realtime API's token-based `login`/`resume`
-  call, so no password is stored.
+  bot's user id and `ROCKETCHAT_TOKEN` to the generated token; these are
+  sent as the standard `X-User-Id` / `X-Auth-Token` REST API headers, so
+  no password is stored.
 - A local Ollama server (`ollama serve`) with the configured model pulled
   (`ollama pull llama3.2`).
+- If the bot is in many rooms, Rocket.Chat's default REST API rate limit
+  may kick in (each poll cycle does one request per room). Raise the
+  limit under Admin -> Rate Limiter, or increase `ROCKBOT_POLL_INTERVAL`.
 
 ## Running
 

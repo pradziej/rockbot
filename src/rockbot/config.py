@@ -6,8 +6,8 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    # Rocket.Chat
-    rocketchat_url: str = "ws://localhost:3000/websocket"
+    # Rocket.Chat REST API base URL (no websockets involved).
+    rocketchat_url: str = "http://localhost:3000"
     rocketchat_user_id: str
     rocketchat_token: str
 
@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # Bot behaviour
     rockbot_trigger: str = "/rockbot"
+    rockbot_poll_interval: float = 2.0
     rockbot_history_length: int = 10
     rockbot_log_level: str = "INFO"
 
