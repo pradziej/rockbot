@@ -3,6 +3,7 @@ import datetime as dt
 import httpx
 import pytest
 
+import rockbot.chat.rocketchat_client as rocketchat_client_module
 from rockbot.chat.rocketchat_client import RocketChatClient, parse_ts
 
 
@@ -79,6 +80,36 @@ async def test_get_new_messages_returns_empty_on_rate_limit():
     client = _client_with(handler)
     messages = await client.get_new_messages(Room(id="room-c", type="c"), dt.datetime.now(dt.timezone.utc))
     assert messages == []
+
+
+def test_verify_ssl_defaults_to_true(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        rocketchat_client_module.httpx,
+        "AsyncClient",
+        lambda **kwargs: captured.update(kwargs),
+    )
+
+    RocketChatClient(base_url="https://rc.example", user_id="bot", token="tok")
+
+    assert captured["verify"] is True
+
+
+def test_verify_ssl_false_is_forwarded_and_warns(monkeypatch, caplog):
+    captured = {}
+    monkeypatch.setattr(
+        rocketchat_client_module.httpx,
+        "AsyncClient",
+        lambda **kwargs: captured.update(kwargs),
+    )
+
+    with caplog.at_level("WARNING"):
+        RocketChatClient(
+            base_url="https://rc.example", user_id="bot", token="tok", verify_ssl=False
+        )
+
+    assert captured["verify"] is False
+    assert "TLS certificate verification is disabled" in caplog.text
 
 
 @pytest.mark.asyncio

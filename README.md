@@ -79,6 +79,10 @@ Requirements:
 - If the bot is in many rooms, Rocket.Chat's default REST API rate limit
   may kick in (each poll cycle does one request per room). Raise the
   limit under Admin -> Rate Limiter, or increase `ROCKBOT_POLL_INTERVAL`.
+- If the Rocket.Chat instance uses a self-signed TLS certificate, set
+  `ROCKETCHAT_VERIFY_SSL=false` to skip certificate verification. Only do
+  this for an instance you trust - it removes protection against
+  man-in-the-middle attacks.
 
 ## Running
 

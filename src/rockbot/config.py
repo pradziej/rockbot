@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     rocketchat_url: str = "http://localhost:3000"
     rocketchat_user_id: str
     rocketchat_token: str
+    # Set to false to skip TLS certificate verification, e.g. when the
+    # server uses a self-signed certificate. Only use this for a trusted
+    # instance - it removes protection against man-in-the-middle attacks.
+    rocketchat_verify_ssl: bool = True
 
     # Ollama
     ollama_host: str = "http://localhost:11434"

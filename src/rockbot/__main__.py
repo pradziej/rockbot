@@ -20,6 +20,7 @@ async def main() -> None:
         base_url=settings.rocketchat_url,
         user_id=settings.rocketchat_user_id,
         token=settings.rocketchat_token,
+        verify_ssl=settings.rocketchat_verify_ssl,
     )
     ollama_client = OllamaClient(
         host=settings.ollama_host,

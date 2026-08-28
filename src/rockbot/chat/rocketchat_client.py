@@ -54,13 +54,20 @@ class RocketChatClient:
         base_url: str,
         user_id: str,
         token: str,
+        verify_ssl: bool = True,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
+        if not verify_ssl:
+            logger.warning(
+                "TLS certificate verification is disabled for the Rocket.Chat "
+                "connection - only use this for trusted self-signed certificates."
+            )
         self.user_id = user_id
         self._http = httpx.AsyncClient(
             base_url=f"{base_url.rstrip('/')}/api/v1/",
             headers={"X-Auth-Token": token, "X-User-Id": user_id},
             timeout=10.0,
+            verify=verify_ssl,
             transport=transport,
         )
 
