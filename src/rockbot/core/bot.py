@@ -96,8 +96,9 @@ class RockBot:
 
             if message.qualifier is not None:
                 continue  # Not a plain text message (e.g. user joined/left).
-            if message.sender_id == self._client.user_id:
-                continue  # Ignore the bot's own messages.
+            #Do not ignore my own messages... while the API key is issued by myself
+            #if message.sender_id == self._client.user_id:
+            #    continue  # Ignore the bot's own messages.
 
             query = extract_query(message.text, self._trigger)
             if query is None:
