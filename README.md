@@ -13,6 +13,12 @@ A small, extensible Rocket.Chat bot that forwards user messages to a local
   bot's rooms (`subscriptions.get`) and fetches each room's new messages
   since the last poll (`channels.history` / `groups.history` /
   `im.history`, depending on room type).
+- By default every room the bot is a member of is polled. Set
+  `ROCKBOT_ROOMS` to a comma-separated list to restrict this to specific
+  rooms, given by ID and/or by name (channel/group name, or a DM
+  counterpart's username) - `core/rooms.py` resolves names against the
+  bot's subscriptions on every poll, so a room becomes watchable as soon
+  as the bot is invited to it, no restart needed.
 - The bot only responds to messages addressed to it via a trigger prefix
   (`ROCKBOT_TRIGGER`, default `/rockbot`) - e.g. `/rockbot how's it
   going?`. Anything else in the channel is ignored, so the bot doesn't
@@ -69,6 +75,10 @@ Requirements:
 - A running Rocket.Chat instance, with a bot user created and **invited to
   the rooms it should listen in** (a newly-joined room is picked up on the
   next poll, but its message history before that point is never replayed).
+  This also applies to `ROCKBOT_ROOMS` entries given by name: a room or DM
+  can only be resolved if the bot already has a subscription to it (for a
+  DM, that means the other person has already messaged the bot, or it was
+  opened for them some other way).
 - A Personal Access Token for that bot user (Rocket.Chat: avatar menu ->
   My Account -> Personal Access Tokens). Set `ROCKETCHAT_USER_ID` to the
   bot's user id and `ROCKETCHAT_TOKEN` to the generated token; these are

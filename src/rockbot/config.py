@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Bot behaviour
     rockbot_trigger: str = "/rockbot"
     rockbot_poll_interval: float = 2.0
+    # Comma-separated room IDs and/or names (channel/group name, or DM
+    # counterpart's username) to restrict polling to. Empty means "every
+    # room the bot is a member of".
+    rockbot_rooms: str = ""
     rockbot_history_length: int = 10
     rockbot_log_level: str = "INFO"
 

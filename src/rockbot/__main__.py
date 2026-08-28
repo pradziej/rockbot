@@ -6,6 +6,7 @@ from rockbot.chat.rocketchat_client import RocketChatClient
 from rockbot.config import get_settings
 from rockbot.core.bot import RockBot
 from rockbot.core.conversation import ConversationStore
+from rockbot.core.rooms import parse_room_list
 from rockbot.handlers import build_default_router
 from rockbot.logging_config import configure_logging
 
@@ -36,6 +37,7 @@ async def main() -> None:
         poll_interval=settings.rockbot_poll_interval,
         router=router,
         conversation_store=conversation_store,
+        watch_rooms=parse_room_list(settings.rockbot_rooms),
     )
 
     logger.info("Starting rockbot (model=%s)", settings.ollama_model)

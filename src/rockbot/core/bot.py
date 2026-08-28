@@ -6,6 +6,7 @@ import httpx
 
 from rockbot.chat.rocketchat_client import RocketChatClient, Room
 from rockbot.core.conversation import ConversationStore
+from rockbot.core.rooms import resolve_rooms
 from rockbot.core.router import MessageContext, Router
 from rockbot.core.trigger import extract_query
 
@@ -20,6 +21,11 @@ class RockBot:
     bot via `trigger` (e.g. "/rockbot how's it going?") are answered;
     everything else is ignored so the bot doesn't talk over every message
     in a channel.
+
+    If `watch_rooms` is given, only those rooms are polled (each entry may
+    be a room ID or a name, resolved against the bot's subscriptions on
+    every poll cycle - see `core/rooms.py`). Otherwise every room the bot
+    is a member of is polled.
     """
 
     def __init__(
@@ -29,15 +35,18 @@ class RockBot:
         poll_interval: float,
         router: Router,
         conversation_store: ConversationStore,
+        watch_rooms: list[str] | None = None,
     ) -> None:
         self._client = client
         self._trigger = trigger
         self._poll_interval = poll_interval
         self._router = router
         self._conversations = conversation_store
+        self._watch_rooms = watch_rooms or []
         self._last_seen: dict[str, dt.datetime] = {}
         self._background_tasks: set[asyncio.Task] = set()
         self._identified = False
+        self._warned_unresolved: set[str] = set()
 
     async def run_forever(self) -> None:
         logger.info("Polling Rocket.Chat every %.1fs", self._poll_interval)
@@ -53,7 +62,8 @@ class RockBot:
             await asyncio.sleep(self._poll_interval)
 
     async def _poll_once(self) -> None:
-        rooms = await self._client.get_rooms()
+        subscriptions = await self._client.get_rooms()
+        rooms = self._select_rooms(subscriptions)
         now = dt.datetime.now(dt.timezone.utc)
         for room in rooms:
             if room.id not in self._last_seen:
@@ -61,6 +71,22 @@ class RockBot:
                 self._last_seen[room.id] = now
                 continue
             await self._poll_room(room)
+
+    def _select_rooms(self, subscriptions: list[Room]) -> list[Room]:
+        if not self._watch_rooms:
+            return subscriptions
+
+        rooms, unresolved = resolve_rooms(subscriptions, self._watch_rooms)
+        for entry in unresolved:
+            if entry in self._warned_unresolved:
+                continue
+            self._warned_unresolved.add(entry)
+            logger.warning(
+                "Configured room '%s' not found among the bot's subscriptions "
+                "(check the ID/name, and that the bot has been invited)",
+                entry,
+            )
+        return rooms
 
     async def _poll_room(self, room: Room) -> None:
         oldest = self._last_seen[room.id]

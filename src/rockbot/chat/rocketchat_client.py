@@ -19,6 +19,8 @@ _HISTORY_ENDPOINT = {
 class Room:
     id: str
     type: str
+    # Channel/group name, or the other participant's username for a DM.
+    name: str | None = None
 
 
 @dataclass(frozen=True)
@@ -89,7 +91,7 @@ class RocketChatClient:
         for sub in subscriptions:
             if sub.get("t") not in _HISTORY_ENDPOINT:
                 continue
-            rooms.append(Room(id=sub["rid"], type=sub["t"]))
+            rooms.append(Room(id=sub["rid"], type=sub["t"], name=sub.get("name")))
         return rooms
 
     async def get_new_messages(self, room: Room, oldest: dt.datetime) -> list[IncomingMessage]:
