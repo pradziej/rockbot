@@ -25,8 +25,9 @@ async def main() -> None:
 
     bot = RockBot(
         url=settings.rocketchat_url,
-        username=settings.rocketchat_username,
-        password=settings.rocketchat_password,
+        user_id=settings.rocketchat_user_id,
+        token=settings.rocketchat_token,
+        trigger=settings.rockbot_trigger,
         router=router,
         conversation_store=conversation_store,
     )

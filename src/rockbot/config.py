@@ -8,8 +8,8 @@ class Settings(BaseSettings):
 
     # Rocket.Chat
     rocketchat_url: str = "ws://localhost:3000/websocket"
-    rocketchat_username: str
-    rocketchat_password: str
+    rocketchat_user_id: str
+    rocketchat_token: str
 
     # Ollama
     ollama_host: str = "http://localhost:11434"
@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     )
 
     # Bot behaviour
+    rockbot_trigger: str = "/rockbot"
     rockbot_history_length: int = 10
     rockbot_log_level: str = "INFO"
 

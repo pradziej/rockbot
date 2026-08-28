@@ -6,8 +6,9 @@ from rockbot.handlers import llm_fallback, ping
 def build_default_router(ollama_client: OllamaClient) -> Router:
     """Wires up the built-in handlers.
 
-    Add new handlers by registering them here, before the LLM fallback -
-    e.g. router.register("help", help_handler.handle).
+    Handlers only ever see the text after the trigger (e.g. "/rockbot ping"
+    arrives as "ping"). Add new handlers by registering them here, before
+    the LLM fallback - e.g. router.register("help", help_handler.handle).
     """
     router = Router()
     router.register("ping", ping.handle)

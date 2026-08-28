@@ -7,7 +7,12 @@ A small, extensible Rocket.Chat bot that forwards user messages to a local
 
 - `rocketchat-async` opens a websocket to Rocket.Chat's Realtime API and
   subscribes to messages in every channel the bot user is a member of.
-- Each incoming message is routed through a `Router`
+- The bot only responds to messages addressed to it via a trigger prefix
+  (`ROCKBOT_TRIGGER`, default `/rockbot`) - e.g. `/rockbot how's it
+  going?`. Anything else in the channel is ignored, so the bot doesn't
+  answer every message. `core/trigger.py` strips the prefix; handlers only
+  ever see the text after it (`/rockbot ping` arrives as `ping`).
+- The remaining text is routed through a `Router`
   (`rockbot/core/router.py`): a list of handlers tried in order, first one
   to return a reply wins.
 - The last handler is `handlers/llm_fallback.py`, which sends the message
@@ -17,20 +22,21 @@ A small, extensible Rocket.Chat bot that forwards user messages to a local
   model has some context.
 
 ```
-rocketchat --(websocket)--> RockBot --> Router --> handlers (ping, ...)
-                                                 -> llm_fallback --> Ollama
+rocketchat --(websocket)--> RockBot --(trigger?)--> Router --> handlers (ping, ...)
+                                                             -> llm_fallback --> Ollama
 ```
 
 ## Adding a new command
 
-Add a module under `rockbot/handlers/`, e.g. `handlers/help.py`:
+Add a module under `rockbot/handlers/`, e.g. `handlers/help.py`. Handlers
+receive the text with the trigger already stripped:
 
 ```python
 from rockbot.core.router import MessageContext
 
 async def handle(ctx: MessageContext) -> str | None:
-    if ctx.text.strip().lower() == "!help":
-        return "Available commands: !ping, !help"
+    if ctx.text.strip().lower() == "help":
+        return "Available commands: ping, help"
     return None
 ```
 
@@ -57,6 +63,11 @@ Requirements:
 - A running Rocket.Chat instance, with a bot user created and **invited to
   the channels it should listen in** (the bot only subscribes to channels
   it's already a member of at startup).
+- A Personal Access Token for that bot user (Rocket.Chat: avatar menu ->
+  My Account -> Personal Access Tokens). Set `ROCKETCHAT_USER_ID` to the
+  bot's user id and `ROCKETCHAT_TOKEN` to the generated token; the bot
+  authenticates over the realtime API's token-based `login`/`resume`
+  call, so no password is stored.
 - A local Ollama server (`ollama serve`) with the configured model pulled
   (`ollama pull llama3.2`).
 
@@ -67,6 +78,28 @@ python -m rockbot
 # or, after `pip install -e .`:
 rockbot
 ```
+
+In a channel the bot is a member of, address it with the trigger prefix:
+
+```
+/rockbot The quick brown fox...
+```
+
+Messages that don't start with the trigger (`ROCKBOT_TRIGGER`, default
+`/rockbot`) are ignored.
+
+### With Docker
+
+```bash
+docker build -t rockbot .
+docker run --rm --env-file .env rockbot
+```
+
+Rocket.Chat and Ollama are expected to be reachable at the URLs in `.env`.
+If they run on the host machine rather than in a container, point
+`ROCKETCHAT_URL` / `OLLAMA_HOST` at `host.docker.internal` instead of
+`localhost` (on Linux, add `--add-host=host.docker.internal:host-gateway`
+to the `docker run` command).
 
 ## Testing
 
