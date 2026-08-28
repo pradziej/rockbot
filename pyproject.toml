@@ -7,7 +7,7 @@ name = "rockbot"
 version = "0.1.0"
 description = "A Rocket.Chat bot that answers user queries using a local Ollama model."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "rocketchat-async>=1.2.0",
@@ -30,7 +30,7 @@ packages = ["src/rockbot"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
